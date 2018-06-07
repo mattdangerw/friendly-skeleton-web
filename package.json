@@ -1,11 +1,9 @@
 {
   "scripts": {
     "deploy": "firebase deploy",
-    "serve": "concurrently \"firebase serve\" \"http-server public\""
+    "serve": "firebase serve"
   },
   "devDependencies": {
-    "concurrently": "^3.5.1",
-    "http-server": "^0.11.1",
     "firebase-tools": "^3.18.6"
   }
 }
