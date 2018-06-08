@@ -17,7 +17,7 @@
       padding: 0;
       font-family: sans-serif;
       background-color: #eceff1;
-      font-family: 'Google Sans',sans-serif;
+      font-family: "Google Sans",sans-serif;
     }
 
     .app {
@@ -26,33 +26,48 @@
 
     .header {
       background-color: white;
-      height: 150px;
+      min-height: 140px;
       padding: 20px;
     }
 
-    h1 {
+    .title {
       color: rgba(0,0,0,0.87);
       font-size: 30px;
       font-weight: 400;
       line-height: 40px;
     }
 
-    h2 {
+    .subtitle {
       color: rgba(0,0,0,0.54);
       font-size: 16px;
       line-height: 24px;
+    }
+
+    #welcome-message {
+      color: rgba(0,0,0,0.87);
+      font-size: 16px;
+    }
+
+    #sign-in {
+      margin-bottom: 20px;
+      font-size: 16px;
+    }
+
+    #skeleton {
+      max-width: 100%;
     }
     </style>
   </head>
   <body>
     <div class="app">
       <header class="header">
-        <h1>Welcome to the Firebase Skeleton App!</h1>
-        <h2>The smallest app we could make using auth, realtime database, and hosting.</h2>
+        <h1 class="title">Welcome to the Firebase Skeleton App!</h1>
+        <h2 class="subtitle">The smallest app we could make using auth, realtime database, and hosting.</h2>
       </header>
-      <button id="sign-in">Sign in with Google</button>
-      <h2 id="welcome-message"></h2>
-      <img src="/skeleton.png" alt="Skeleton">
+      <h2 id="welcome-message">&nbsp;</h2>
+      <button id="sign-in">Sign in</button>
+      <br>
+      <img id="skeleton" src="/skeleton.png" alt="Skeleton">
     </div>
     <!-- Import and configure the Firebase SDK -->
     <!-- These scripts are made available when the app is served or deployed on Firebase Hosting -->
@@ -66,38 +81,50 @@
       if (!firebase.auth().currentUser) {
         var provider = new firebase.auth.GoogleAuthProvider();
         firebase.auth().signInWithPopup(provider).then(function (result) {
-          var token = result.credential.accessToken;
-          var user = result.user;
-          document.getElementById('quickstart-oauthtoken').textContent = token;
+          console.log("Signed in!");
         }).catch(function (error) {
           console.error(error);
         });
       } else {
+        console.log("Signed out.");
         firebase.auth().signOut();
       }
-      document.getElementById('sign-in').disabled = true;
+      document.getElementById("sign-in").disabled = true;
     }
 
-    function welcomeMessage(name) {
-      return "Welcome " + name + "! You have logged on once."
+    function welcomeMessage(name, signInCount) {
+      var countMessage = "once";
+      if (signInCount > 1) {
+        countMessage = signInCount + " times";
+      }
+      var message = "Welcome " + name + "! You have visited " + countMessage + ".";
+      document.getElementById("welcome-message").textContent = message;
     }
 
     function initApp() {
-      // Welcome ! You have logged on < span id = "logins" > once</span >.
       firebase.auth().onAuthStateChanged(function (user) {
         if (user) {
-          var displayName = user.displayName;
+          displayName = user.displayName;
           var uid = user.uid;
-          var email = user.email;
-          document.getElementById('sign-in').textContent = 'Sign out';
-          document.getElementById('welcome-message').textContent = welcomeMessage(displayName);
+
+          var signInCountRef = firebase.database().ref("users/" + uid + "/signInCount");
+          signInCountRef.transaction(function (currentCount) {
+            if (currentCount) {
+              return currentCount + 1;
+            }
+            return 1;
+          });
+          signInCountRef.on("value", function (snapshot) {
+            welcomeMessage(user.displayName, snapshot.val());
+          });
+          document.getElementById("sign-in").textContent = "Sign out";
         } else {
-          document.getElementById('sign-in').textContent = 'Sign in with Google';
-          document.getElementById('welcome-message').textContent = '';
+          document.getElementById("sign-in").textContent = "Sign in";
+          document.getElementById("welcome-message").textContent = "Sign in below with Google";
         }
-        document.getElementById('sign-in').disabled = false;
+        document.getElementById("sign-in").disabled = false;
       });
-      document.getElementById('sign-in').addEventListener('click', toggleSignIn, false);
+      document.getElementById("sign-in").addEventListener("click", toggleSignIn, false);
     }
     window.onload = function () {
       initApp();
